@@ -4,40 +4,52 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
+import android.widget.ImageView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.codepath.asynchttpclient.AsyncHttpClient
 import com.codepath.asynchttpclient.callback.JsonHttpResponseHandler
 import okhttp3.Headers
 
 class MainActivity : AppCompatActivity() {
-    private val nextButton : Button get() = findViewById(R.id.btnNext);
-    private val tvName: TextView get() = findViewById(R.id.tvName);
-    private val tvType : Button get() = findViewById(R.id.tvType);
-    private val ivPicture : Button get() = findViewById(R.id.ivPicture);
-
+    private val ivPicture : ImageView get() = findViewById(R.id.ivPicture);
+    private lateinit var myList: MutableList<String>
+    private lateinit var rvPokemon: RecyclerView
+    var imageURL = ""
+    var counter = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        nextButton.setOnClickListener{
+        rvPokemon = findViewById(R.id.rvPokemon)
+        myList = mutableListOf()
+
+        for (i in 1 until 10) {
+            Log.d("pokemon", "counting: $i")
             getImageURL()
         }
 
-        getImageURL()
+
     }
 
     private fun getImageURL() {
         val client = AsyncHttpClient()
-
-        var petImageURL = ""
-
-        client["https://dog.ceo/api/breeds/image/random", object : JsonHttpResponseHandler() {
+        counter++
+        client["https://pokeapi.co/api/v2/pokemon/$counter", object : JsonHttpResponseHandler() {
             override fun onSuccess(statusCode: Int, headers: Headers, json: JsonHttpResponseHandler.JSON) {
-                Log.d("Dog", "response successful")
-                petImageURL = json.jsonObject.getString("message")
-                Log.d("petImageURL", "pet image URL set")
+                Log.d("pokemon", "response successful$json")
+                imageURL = json.jsonObject.getJSONObject("sprites").getString("front_default");
+                Log.d("pokemon", "image URL set")
+
+                myList.add(imageURL)
+
+                Log.d("pokemon", "getting item")
+                val adapter = ItemAdapter(myList)
+                rvPokemon.adapter = adapter
+                rvPokemon.layoutManager = LinearLayoutManager(this@MainActivity)
+                Log.d("pokemon", "completed")
             }
 
             override fun onFailure(
@@ -46,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                 errorResponse: String,
                 throwable: Throwable?
             ) {
-                Log.d("Dog Error", errorResponse)
+                Log.d("pokemon Error", errorResponse)
             }
         }]
     }
